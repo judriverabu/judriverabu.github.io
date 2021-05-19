@@ -1,0 +1,200 @@
+---
+title: "Actividad 2 : Ajuste de regresión lineal y Regresión logística a ojo"
+author: 
+  - name: Gustavo Rendón Vélez
+  - name: Juan David Rivera Builes
+  - name: Sandra Milena Berrio Berrio
+  - name: Veronica Yohana Garzon Zuluaga
+#date: "17 de mayo de 2021"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Cambiemos el directorio activo 
+Actualizamos el directorio activo a la carperta donde se encuentran los archivos a trabajar
+y donde se almacenarán los resultados posteriormente.Para verificar que nos encontremos en la carpeta indicada listamos los archivos que se encuentran en el directorio activo.
+```{r}
+dir_ppal   = "C:/Git/specialization-AI/2021-01/Decisiones bajo incertidumbre/actividad_02"
+
+setwd(dir_ppal)
+getwd()
+list.files()
+```
+
+```{r,echo=FALSE}
+clasif=read.csv("datos_clasificacion.csv",sep = ' ')
+#head(clasif)
+```
+
+
+## 1. Optimizando un modelo lineal a ojo
+
+Cargamos los datos e imprimimos una muestra de ellos para validar su correcta carga
+
+```{r,echo=FALSE}
+datos_regresion = read.table("datos_regresion.csv",header=TRUE)
+imp=head(datos_regresion)
+knitr::kable(imp, caption = "Muestra datos regresión")
+```
+
+Graficamos los datos
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+par(pty='s')
+plot(datos_regresion,main="x vs. y ")
+grid()
+```
+
+
+Objetivo: determinar a ojo cuáles son los valores del intercepto y de la pendiente de la recta que mejor aproxime los puntos.
+
+El procedimiento propuesto es el siguiente:
+
+**1. Proponga un punto en el espacio de parámetros.**
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+#par(pty='s')
+knitr::include_graphics(file.path(dir_ppal,"EspacioParametros.png"))
+
+```
+
+**2. Gráfique la recta sobre los puntos.**
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+knitr::include_graphics(file.path(dir_ppal,"RectaSobrePuntos.png"))
+```
+
+
+**3. Repita los dos pasos anteriores hasta que usted se sienta satisfecho con el resultado**
+Se realizaron varias repeticiones de los pasos anteriores y se guardaron las imagenes con las cuales se realizó el gif del siguiente punto.
+
+**4. Al finalizar genere un gif animado que muestre cómo evolucionó el ajuste (los paquetes caTools,        animation y magick en R son opciones para hacer animaciones).**
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+knitr::include_graphics(file.path(dir_ppal,"Resultado.gif"))
+```
+
+## 2. Optimizando un modelo de regresión logística a ojo
+
+A continuación se propone repetir el procedimiento anterior para unos datos datos_clasificacion.csv. El objetivo es ajustar una curva logística a los datos a ojo. A continuación se muestra un ejemplo de una curva logística:
+
+
+### Instalamos las librerías necesarias para ajustar la curva
+
+```{r}
+# if (!require("dplyr")) install.packages("dplyr")
+# if (!require("magick")) install.packages("magick")
+
+library(stringr)
+library(dplyr)
+library(magick)
+```
+
+### Lectura de los datos
+
+```{r,echo=FALSE}
+clasif=read.csv("datos_clasificacion.csv",sep = ' ')
+knitr::kable(head(clasif,10), caption = "Muestra datos clasificación")
+```
+
+
+Graficamos los datos tal cual esta en la base
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+plot(clasif,main="Regresión Logistica")
+grid()
+```
+
+### Creación de tabla con tasa de ocurrencias
+
+**1.Divida el rango de la variable explicativa (es x) en 10 sub intervalos**
+
+Dividimos los datos en 10 grupos y calculamos el número de ocurrencias (Número de unos) que aparecen en cada uno de estos, este valor lo dividimos por el número de registros de cada grupo para obtener la tasa de ocurrencias.
+
+```{r,echo=FALSE}
+clasif$grupo= ntile(clasif$x,10)
+clasif=clasif[order(clasif$grupo),]
+rownames(clasif) <- NULL
+
+
+grupos=clasif %>% group_by(grupo)  %>% 
+                  summarise(
+                            ocurr      = sum(y),
+                            tasa_ocurr = sum(y)/n(),
+                            min        = min(x),max=max(x),
+                            pto_medio  = (min(x)+max(x))/2
+                            )
+
+knitr::kable(grupos, caption = "Base de datos distribuida en 10 grupos")
+```
+
+**2. En el centro de cada subintervalo dibuje una línea vertical cuya altura sea la tasa de ocurrencias (unos) en ese subintervarvalo.**
+
+Graficamos en el punto medio de cada grupo la tasa de ocurrencias.
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+plot(grupos$pto_medio,
+     grupos$tasa_ocurr,
+     col="red",
+     type="h",
+     main = "Ocurrencias por intervalo (10 intervalos)",
+     xlab = "Punto medio de cada intervalo",ylab = "Tasa de ocurrencias",
+     lwd=5
+     )
+
+```
+
+**3.Proponga un punto en el espacio de parámetros.**
+
+Se selecciona una combinación de parámetros.
+
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+plot(-5,10,type = "o",xlim = c(-8,-1),ylim = c(5,15),
+     main = "Espacio de parámetros",
+     xlab = expression(beta[0]),
+     ylab = expression(beta[1]))
+grid()
+```
+**4. Grafique la curva logística sobre el gráfico anterior**
+**5. Repita los dos pasos anteriores hasta que usted se sienta satisfecho con el resultado**
+**6. Al finalizar genere un gif animado que muestre cómo evolucionó el ajuste .**
+
+Para resolver los puntos 4,5 y 6 se selecionaron del espacio de parámetros ilustrado anteriormente, varias combinaciones de parámetros con el fin de ajustar la grafica de la función a los datos de la muestra. Con las imagenes generadas creamos el Gif que se puede observar más abajo.
+
+
+
+Los resultados de cada iteración fueron:
+
+
+
+
+
+```{r,fig.align="center",out.width = "500px",echo=FALSE}
+knitr::include_graphics(file.path(dir_ppal,"gif_reg_logit.gif"))
+```
+
+## Preguntas adicionales
+
+**1.¿Es posible calibrar modelos de aprendizaje de máquina a ojo?¿Es posible calibrar modelos de aprendizaje de máquina a ojo?**
+
+Es posible tener una aproximación de los datos, pero a ojo no necesariamente obtenemos la combinación de parámetros que minimicen el error o la medida de desempeño que estemos utilizando. Además, cuando el espacio de parámetros aumenta (mayor a 3) se vuelve demasiado completo tratar de aproximarlos a ojo. En conclusión, es posible calibrar el modelo a ojo, pero no es posible obtener el mejor modelo.
+
+**2. ¿Qué pasa con esta metodología cuando el número de parámetros aumenta? **
+
+Cuando el número de parámetros aumenta, esta metodología no es tan aplicable, dado que no es posible realizar una interpretación visual en un plano 3d o superior.
+En este caso es necesario contar con una medida que nos indique que tan bien se ajusta el modelo.
+
+**3.¿Cómo podría disponibilizar este método de ajuste gráfico de modelos dentro de una compañía?**
+
+Sin descartar el hecho de que ajustar a ojo un modelo es un método que trae consigo un riesgo bastante alto, porque está determinado a la interpretación de quien lo está ajustando y esta interpretación puede ser subjetiva.
+
+En caso de querer disponer un ambiente productivo para este método, se podría hacer por ejemplo la implementación de un API que al consumirse reciba como parámetros un punto en el espacio de parámetros y devuelva al usuario la gráfica y el ajuste para el modelo con los datos suministrados.
+
+
+
